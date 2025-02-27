@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib
 from matplotlib import pyplot as plt
 matplotlib.use('Agg')  # Use a non-interactive backend
-from copernicus_test import config
+from api_key import config
 
 # Define bounding box (longitude, latitude) for Bath
 bath_bbox = BBox(bbox=[-2.414, 51.366, -2.324, 51.412], crs=CRS.WGS84)
