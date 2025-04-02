@@ -3,8 +3,11 @@ import pandas as pd
 import numpy as np
 import time
 import ee  # Import Google Earth Engine
+from prometheus_client import Counter
 from tqdm import tqdm  # Progress bar
 from api_key import config
+
+count = 0
 
 #Authentication
 ee.Authenticate()
@@ -12,7 +15,7 @@ ee.Authenticate()
 ee.Initialize(project='ee-asr66')
 
 # 🔹 Read Monte Carlo Sample Locations
-mcs_file = "monte_carlo_samples.geojson"
+mcs_file = "../data/monte_carlo_samples.geojson"
 gdf = gpd.read_file(mcs_file)
 
 # 🔹 Define Landsat Data Parameters
@@ -24,7 +27,7 @@ results = []
 
 # 🔹 Loop Over Each Sample Location
 for index, row in tqdm(gdf.iterrows(), total=len(gdf)):
-    if index < 10:
+    if index < 100:
         lat, lon = row.geometry.y, row.geometry.x  # Extract lat/lon
 
         # Define a point and buffer for the area of interest
@@ -70,11 +73,19 @@ for index, row in tqdm(gdf.iterrows(), total=len(gdf)):
 
         time.sleep(0.5)  # Avoid hitting API rate limits
 
+        if index%20 == 19:
+            df = pd.DataFrame(results)
+            df.to_csv("landsat_data_{}.csv".format(count), index=False)  # CSV format
+            df.to_parquet("landsat_data_{}.parquet".format(count))  # Parquet format (faster for large data)
+            results = []
+            count += 1
+
+
 # 🔹 Convert Results to DataFrame
 df = pd.DataFrame(results)
 
 # 🔹 Save Data
-df.to_csv("landsat_data_full.csv", index=False)  # CSV format
-df.to_parquet("landsat_data_full.parquet")  # Parquet format (faster for large data)
+df.to_csv("landsat_data_last.csv", index=False)  # CSV format
+df.to_parquet("landsat_data_last.parquet")  # Parquet format (faster for large data)
 
 print("✅ Data collection complete! Saved as CSV & Parquet.")

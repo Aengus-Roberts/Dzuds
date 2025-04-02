@@ -7,7 +7,7 @@ from tqdm import tqdm  # Progress bar
 from api_key import config
 
 # 🔹 Read Monte Carlo Sample Locations
-mcs_file = "monte_carlo_samples.geojson"
+mcs_file = "../data/monte_carlo_samples.geojson"
 gdf = gpd.read_file(mcs_file).to_crs(epsg=4326)  # Ensure WGS84 CRS
 print(f"Loaded {mcs_file} with CRS: {gdf.crs}")
 
@@ -15,7 +15,7 @@ print(f"Loaded {mcs_file} with CRS: {gdf.crs}")
 resolution = 1000  # 1 km grid
 
 # Read date windows from file
-with open("date_windows.txt", "r") as f:
+with open("../data/date_windows.txt", "r") as f:
     dates = [line.strip() for line in f.readlines()]
 
 # Create date intervals
@@ -56,6 +56,7 @@ function evaluatePixel(sample) {
 
 # 🔹 Create Data Storage
 results = []
+count = 0
 
 # 🔹 Loop Over Each Sample Location and Each Date Window
 for index, row in tqdm(gdf.iterrows(), total=len(gdf)):
@@ -115,11 +116,18 @@ for index, row in tqdm(gdf.iterrows(), total=len(gdf)):
 
             time.sleep(0.1)  # Avoid hitting API rate limits
 
+            if index % 20 == 19:
+                df = pd.DataFrame(results)
+                df.to_csv("landsat_data_{}.csv".format(count), index=False)  # CSV format
+                df.to_parquet("landsat_data_{}.parquet".format(count))  # Parquet format (faster for large data)
+                results = []
+                count += 1
+
 # 🔹 Convert Results to DataFrame
 df = pd.DataFrame(results)
 
 # 🔹 Save Data
-df.to_csv("sentinel_data_full.csv", index=False)  # CSV format
-df.to_parquet("sentinel_data_full.parquet")  # Parquet format (faster for large data)
+df.to_csv("sentinel_data_last.csv", index=False)  # CSV format
+df.to_parquet("sentinel_data_last.parquet")  # Parquet format (faster for large data)
 
 print("✅ Data collection complete! Saved as CSV & Parquet.")

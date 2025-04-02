@@ -7,7 +7,7 @@ connection = openeo.connect("https://openeo.cloud")
 connection.authenticate_oidc()  # Authenticate if required
 
 # Load Monte Carlo Sample Locations
-mcs_file = "monte_carlo_samples.geojson"
+mcs_file = "../data/monte_carlo_samples.geojson"
 gdf = gpd.read_file(mcs_file)
 
 # Select Sentinel-3 SLSTR dataset
